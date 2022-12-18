@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
-import 'package:wearable_rotary/wearable_rotary.dart';
-
 class WatchScaffold extends StatelessWidget {
   final Widget? body;
   final Widget? title;
   final List<Widget>? actions;
+  final ScrollController? controller;
 
   const WatchScaffold({
     super.key,
     this.body,
     this.title,
     this.actions,
+    this.controller,
   });
 
   static const _kBackgroundColor = Colors.black;
@@ -53,7 +53,7 @@ class WatchScaffold extends StatelessWidget {
               color: _kBackgroundColor,
               margin: EdgeInsets.symmetric(horizontal: padding),
               child: SingleChildScrollView(
-                controller: RotaryScrollController(),
+                primary: false,
                 child: Column(
                   children: [
                     SizedBox(
