@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
-const _kProgressBarStartingPoint = math.pi * (-1 / 2 + 1 / 3);
-const _kProgressBarLength = math.pi / 3;
-
 class RoundScrollBar extends StatefulWidget {
   final ScrollController controller;
   final double padding;
@@ -29,15 +26,20 @@ class RoundScrollBar extends StatefulWidget {
 }
 
 class _RoundScrollBarState extends State<RoundScrollBar> {
-  double index = 0;
-  double length = _kProgressBarLength;
+  // starts at the 2pm marker on an analog watch
+  static const _kProgressBarStartingPoint = math.pi * (-1 / 2 + 1 / 3);
+  // finishes at the 4pm marker on an analog watch
+  static const _kProgressBarLength = math.pi / 3;
+
+  late double _index;
+  late double _length;
 
   bool _isScrollBarVisible = true;
 
   void _onScrolled() {
     setState(() {
       _isScrollBarVisible = true;
-      _updateValues();
+      _updateScrollValues();
     });
     _hideAfterDelay();
   }
@@ -49,18 +51,18 @@ class _RoundScrollBarState extends State<RoundScrollBar> {
     });
   }
 
-  _updateValues() {
-    length = (widget.controller.position.maxScrollExtent /
+  _updateScrollValues() {
+    _length = (widget.controller.position.maxScrollExtent /
         widget.controller.position.viewportDimension);
-    length++;
+    _length++;
 
-    index = (widget.controller.offset /
+    _index = (widget.controller.offset /
         widget.controller.position.viewportDimension);
   }
 
   @override
   void initState() {
-    _updateValues();
+    _updateScrollValues();
     widget.controller.addListener(_onScrolled);
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _hideAfterDelay());
@@ -99,11 +101,11 @@ class _RoundScrollBarState extends State<RoundScrollBar> {
             ),
           ),
           Transform.rotate(
-            angle: index * (_kProgressBarLength / length),
+            angle: _index * (_kProgressBarLength / _length),
             child: CustomPaint(
               size: MediaQuery.of(context).size,
               painter: _RoundProgressBarPainter(
-                angleLength: (_kProgressBarLength / length),
+                angleLength: (_kProgressBarLength / _length),
                 startingAngle: _kProgressBarStartingPoint,
                 color: Theme.of(context).highlightColor.withOpacity(1.0),
                 trackPadding: widget.padding,
@@ -164,7 +166,11 @@ class _RoundProgressBarPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
+  bool shouldRepaint(covariant _RoundProgressBarPainter oldDelegate) {
+    return color != oldDelegate.color ||
+        startingAngle != oldDelegate.startingAngle ||
+        angleLength != oldDelegate.angleLength ||
+        trackWidth != oldDelegate.trackWidth ||
+        trackPadding != oldDelegate.trackPadding;
   }
 }
