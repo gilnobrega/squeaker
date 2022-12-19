@@ -8,12 +8,20 @@ class RoundScrollBar extends StatefulWidget {
   final ScrollController controller;
   final double padding;
   final double width;
+  final bool autoHide;
+  final Curve opacityAnimationCurve;
+  final Duration autoHideDuration;
+  final Duration opacityAnimationDuration;
 
   const RoundScrollBar({
     super.key,
     required this.controller,
     this.padding = 8,
     this.width = 4,
+    this.autoHide = true,
+    this.opacityAnimationCurve = Curves.easeInOut,
+    this.opacityAnimationDuration = const Duration(milliseconds: 250),
+    this.autoHideDuration = const Duration(seconds: 2),
   });
 
   @override
@@ -21,10 +29,24 @@ class RoundScrollBar extends StatefulWidget {
 }
 
 class _RoundScrollBarState extends State<RoundScrollBar> {
-  late double index;
-  late double length;
+  double index = 0;
+  double length = _kProgressBarLength;
+
+  bool _isScrollBarVisible = true;
+
   void _onScrolled() {
-    setState(_updateValues);
+    setState(() {
+      _isScrollBarVisible = true;
+      _updateValues();
+    });
+    _hideAfterDelay();
+  }
+
+  void _hideAfterDelay() {
+    if (!widget.autoHide) return;
+    Future.delayed(widget.autoHideDuration, () {
+      setState(() => _isScrollBarVisible = false);
+    });
   }
 
   _updateValues() {
@@ -41,6 +63,7 @@ class _RoundScrollBarState extends State<RoundScrollBar> {
     _updateValues();
     widget.controller.addListener(_onScrolled);
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _hideAfterDelay());
   }
 
   @override
@@ -49,34 +72,47 @@ class _RoundScrollBarState extends State<RoundScrollBar> {
     super.dispose();
   }
 
+  Widget _addAnimatedOpacity({required Widget child}) {
+    if (!widget.autoHide) return child;
+
+    return AnimatedOpacity(
+      opacity: _isScrollBarVisible ? 1 : 0,
+      duration: widget.opacityAnimationDuration,
+      curve: widget.opacityAnimationCurve,
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        CustomPaint(
-          size: MediaQuery.of(context).size,
-          painter: _RoundProgressBarPainter(
-            angleLength: _kProgressBarLength,
-            color: Theme.of(context).highlightColor,
-            startingAngle: _kProgressBarStartingPoint,
-            trackPadding: widget.padding,
-            trackWidth: widget.width,
-          ),
-        ),
-        Transform.rotate(
-          angle: index * (_kProgressBarLength / length),
-          child: CustomPaint(
+    return _addAnimatedOpacity(
+      child: Stack(
+        children: [
+          CustomPaint(
             size: MediaQuery.of(context).size,
             painter: _RoundProgressBarPainter(
-              angleLength: (_kProgressBarLength / length),
+              angleLength: _kProgressBarLength,
+              color: Theme.of(context).highlightColor,
               startingAngle: _kProgressBarStartingPoint,
-              color: Theme.of(context).highlightColor.withOpacity(1.0),
               trackPadding: widget.padding,
               trackWidth: widget.width,
             ),
           ),
-        )
-      ],
+          Transform.rotate(
+            angle: index * (_kProgressBarLength / length),
+            child: CustomPaint(
+              size: MediaQuery.of(context).size,
+              painter: _RoundProgressBarPainter(
+                angleLength: (_kProgressBarLength / length),
+                startingAngle: _kProgressBarStartingPoint,
+                color: Theme.of(context).highlightColor.withOpacity(1.0),
+                trackPadding: widget.padding,
+                trackWidth: widget.width,
+              ),
+            ),
+          )
+        ],
+      ),
     );
   }
 }

@@ -81,6 +81,7 @@ class _RotaryPageViewState extends State<RotaryPageView> {
         RotaryScrollController(maxIncrement: 50);
     _rotarySubscription = rotaryEvents.listen(_rotaryEventListener);
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
   }
 
   @override
