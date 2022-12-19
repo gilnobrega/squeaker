@@ -20,8 +20,8 @@ class RotaryPageView extends StatefulWidget {
     this.pageController,
     this.duration = const Duration(milliseconds: 250),
     this.curve = Curves.easeInOutCirc,
-    this.physics = const NeverScrollableScrollPhysics(),
-    this.scrollDirection = Axis.horizontal,
+    this.physics = const PageScrollPhysics(),
+    this.scrollDirection = Axis.vertical,
   });
 
   @override
@@ -66,6 +66,10 @@ class _RotaryPageViewState extends State<RotaryPageView> {
     );
   }
 
+  void _onPageChanged(int newPage) {
+    _currentPage = newPage;
+  }
+
   @override
   void initState() {
     _pageController = widget.pageController ?? PageController();
@@ -90,6 +94,7 @@ class _RotaryPageViewState extends State<RotaryPageView> {
       controller: _pageController,
       scrollDirection: widget.scrollDirection,
       physics: widget.physics,
+      onPageChanged: _onPageChanged,
       children: widget.children,
     );
   }
