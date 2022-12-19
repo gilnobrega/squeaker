@@ -14,11 +14,11 @@ class RoundScrollBar extends StatefulWidget {
     super.key,
     required this.controller,
     this.padding = 8,
-    this.width = 4,
+    this.width = 8,
     this.autoHide = true,
     this.opacityAnimationCurve = Curves.easeInOut,
     this.opacityAnimationDuration = const Duration(milliseconds: 250),
-    this.autoHideDuration = const Duration(seconds: 2),
+    this.autoHideDuration = const Duration(seconds: 3),
   });
 
   @override
