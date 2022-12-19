@@ -44,11 +44,20 @@ class _RoundScrollBarState extends State<RoundScrollBar> {
     _hideAfterDelay();
   }
 
+  int _currentHideUpdate = 0;
+
   void _hideAfterDelay() {
     if (!widget.autoHide) return;
-    Future.delayed(widget.autoHideDuration, () {
-      setState(() => _isScrollBarVisible = false);
-    });
+
+    _currentHideUpdate++;
+    final thisUpdate = _currentHideUpdate;
+    Future.delayed(
+      widget.autoHideDuration,
+      () {
+        if (thisUpdate != _currentHideUpdate) return;
+        setState(() => _isScrollBarVisible = false);
+      },
+    );
   }
 
   _updateScrollValues() {

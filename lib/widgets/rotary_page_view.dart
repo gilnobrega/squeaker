@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -13,6 +15,7 @@ class RotaryPageView extends StatefulWidget {
   final Curve curve;
   final ScrollPhysics physics;
   final Axis scrollDirection;
+  final bool hasHapticFeedback;
 
   const RotaryPageView({
     super.key,
@@ -23,6 +26,7 @@ class RotaryPageView extends StatefulWidget {
     this.curve = Curves.easeInOutCirc,
     this.physics = const PageScrollPhysics(),
     this.scrollDirection = Axis.vertical,
+    this.hasHapticFeedback = true,
   });
 
   @override
@@ -35,16 +39,23 @@ class _RotaryPageViewState extends State<RotaryPageView> {
 
   static const _kVibrationDuration = 25;
   static const _kVibrationAmplitude = 64;
+  static const _kOnEdgeVibrationDelay = Duration(seconds: 1);
 
   late final StreamSubscription<RotaryEvent> _rotarySubscription;
 
   late int _currentPage;
 
-  Future<void> _scrollToPage(int page) {
-    return _pageController.animateToPage(
+  void _scrollToPage(int page) {
+    _pageController.animateToPage(
       page,
       duration: widget.duration,
       curve: widget.curve,
+    );
+
+    if (!widget.hasHapticFeedback) return;
+    Vibration.vibrate(
+      duration: _kVibrationDuration,
+      amplitude: _kVibrationAmplitude,
     );
   }
 
@@ -57,39 +68,69 @@ class _RotaryPageViewState extends State<RotaryPageView> {
     }
   }
 
+  int _getNextPage(RotaryEvent event) =>
+      _currentPage + (event.direction == RotaryDirection.clockwise ? 1 : -1);
+
   void _rotaryEventListener(RotaryEvent event) {
-    if (_isAtEdge(event.direction)) return;
-    _currentPage += (event.direction == RotaryDirection.clockwise ? 1 : -1);
-    _scrollToPage(_currentPage);
-    Vibration.vibrate(
-      duration: _kVibrationDuration,
-      amplitude: _kVibrationAmplitude,
-    );
+    final nextPage = _getNextPage(event);
+
+    if (_isAtEdge(event.direction)) {
+      _scrollOnEdge(nextPage);
+      return;
+    }
+
+    _scrollToPage(nextPage);
+    _currentPage = nextPage;
+  }
+
+  bool _isVibrating = false;
+
+  void _scrollOnEdge(int outOfEdgePage) {
+    if (_isVibrating) return;
+
+    _isVibrating = true;
+    _scrollToPage(outOfEdgePage);
+    _pageController.notifyListeners();
+    Future.delayed(_kOnEdgeVibrationDelay, () => _isVibrating = false);
   }
 
   void _onPageChanged(int newPage) {
-    setState(() {
-      _currentPage = newPage;
-    });
+    setState(() => _currentPage = newPage);
   }
 
   @override
   void initState() {
+    _initPageController();
+    _initRotaryScrollController();
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => setState);
+  }
+
+  void _initPageController() {
     _pageController = widget.pageController ?? PageController();
     _currentPage = _pageController.initialPage;
+  }
+
+  void _initRotaryScrollController() {
     _rotaryScrollController = widget.rotaryScrollController ??
         RotaryScrollController(maxIncrement: 50);
     _rotarySubscription = rotaryEvents.listen(_rotaryEventListener);
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
   }
 
   @override
   void dispose() {
+    _disposeRotaryScrollController();
+    _disposePageController();
+    super.dispose();
+  }
+
+  void _disposeRotaryScrollController() {
     _rotarySubscription.cancel();
     _rotaryScrollController.dispose();
+  }
+
+  void _disposePageController() {
     _pageController.dispose();
-    super.dispose();
   }
 
   @override
