@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:squeaker/widgets/round_scroll_bar.dart';
 import 'package:vibration/vibration.dart';
 import 'package:wearable_rotary/wearable_rotary.dart';
 
@@ -67,7 +68,9 @@ class _RotaryPageViewState extends State<RotaryPageView> {
   }
 
   void _onPageChanged(int newPage) {
-    _currentPage = newPage;
+    setState(() {
+      _currentPage = newPage;
+    });
   }
 
   @override
@@ -90,12 +93,22 @@ class _RotaryPageViewState extends State<RotaryPageView> {
 
   @override
   Widget build(BuildContext context) {
-    return PageView(
-      controller: _pageController,
-      scrollDirection: widget.scrollDirection,
-      physics: widget.physics,
-      onPageChanged: _onPageChanged,
-      children: widget.children,
+    return Stack(
+      children: [
+        PageView(
+          controller: _pageController,
+          scrollDirection: widget.scrollDirection,
+          physics: widget.physics,
+          onPageChanged: _onPageChanged,
+          children: widget.children,
+        ),
+        if (_pageController.hasClients)
+          IgnorePointer(
+            child: RoundScrollBar(
+              controller: _pageController,
+            ),
+          ),
+      ],
     );
   }
 }

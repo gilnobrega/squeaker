@@ -4,23 +4,50 @@ import 'dart:math' as math;
 const _kProgressBarStartingPoint = math.pi * (-1 / 2 + 1 / 3);
 const _kProgressBarLength = math.pi / 3;
 
-class RoundScrollBar extends StatelessWidget {
-  final int length;
-  final int index;
-  final Curve curve;
-  final Duration duration;
+class RoundScrollBar extends StatefulWidget {
+  final ScrollController controller;
   final double padding;
   final double width;
 
   const RoundScrollBar({
     super.key,
-    required this.index,
-    required this.length,
-    this.duration = const Duration(milliseconds: 250),
-    this.curve = Curves.easeInOut,
+    required this.controller,
     this.padding = 8,
     this.width = 4,
   });
+
+  @override
+  State<RoundScrollBar> createState() => _RoundScrollBarState();
+}
+
+class _RoundScrollBarState extends State<RoundScrollBar> {
+  late double index;
+  late double length;
+  void _onScrolled() {
+    setState(_updateValues);
+  }
+
+  _updateValues() {
+    length = (widget.controller.position.maxScrollExtent /
+        widget.controller.position.viewportDimension);
+    length++;
+
+    index = (widget.controller.offset /
+        widget.controller.position.viewportDimension);
+  }
+
+  @override
+  void initState() {
+    _updateValues();
+    widget.controller.addListener(_onScrolled);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onScrolled);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,22 +59,20 @@ class RoundScrollBar extends StatelessWidget {
             angleLength: _kProgressBarLength,
             color: Theme.of(context).highlightColor,
             startingAngle: _kProgressBarStartingPoint,
-            trackPadding: padding,
-            trackWidth: width,
+            trackPadding: widget.padding,
+            trackWidth: widget.width,
           ),
         ),
-        AnimatedRotation(
-          duration: duration,
-          curve: curve,
-          turns: _kProgressBarLength / length / (math.pi * 2) * index,
+        Transform.rotate(
+          angle: index * (_kProgressBarLength / length),
           child: CustomPaint(
             size: MediaQuery.of(context).size,
             painter: _RoundProgressBarPainter(
               angleLength: (_kProgressBarLength / length),
               startingAngle: _kProgressBarStartingPoint,
               color: Theme.of(context).highlightColor.withOpacity(1.0),
-              trackPadding: padding,
-              trackWidth: width,
+              trackPadding: widget.padding,
+              trackWidth: widget.width,
             ),
           ),
         )
@@ -73,7 +98,7 @@ class _RoundProgressBarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    Paint paint = Paint()
+    final paint = Paint()
       ..color = color
       ..strokeWidth = trackWidth.toDouble()
       ..style = PaintingStyle.stroke
@@ -87,18 +112,17 @@ class _RoundProgressBarPainter extends CustomPainter {
     final innerWidth = size.width - trackPadding * 2 - trackWidth;
     final innerHeight = size.height - trackPadding * 2 - trackWidth;
 
-    final path = Path();
-
-    path.arcTo(
-      Rect.fromCenter(
-        center: centerOffset,
-        width: innerWidth,
-        height: innerHeight,
-      ),
-      startingAngle,
-      angleLength,
-      true,
-    );
+    final path = Path()
+      ..arcTo(
+        Rect.fromCenter(
+          center: centerOffset,
+          width: innerWidth,
+          height: innerHeight,
+        ),
+        startingAngle,
+        angleLength,
+        true,
+      );
 
     canvas.drawPath(path, paint);
   }
