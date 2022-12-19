@@ -2,16 +2,30 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 class RoundScrollBar extends StatefulWidget {
+  /// ScrollController for the scrollbar.
   final ScrollController controller;
+
+  /// Padding between edges of screen and scrollbar track.
   final double padding;
+
+  /// Width of scrollbar track and thumb.
   final double width;
+
+  /// Whether scrollbar should hide automatically if inactive.
   final bool autoHide;
+
+  /// Animation curve for the showing/hiding animation.
   final Curve opacityAnimationCurve;
-  final Duration autoHideDuration;
+
+  /// Animation duration for the showing/hiding animation.
   final Duration opacityAnimationDuration;
 
+  /// How long scrollbar is displayed after a scroll event.
+  final Duration autoHideDuration;
+
+  /// A scrollbar which curves around circular screens.
+  /// Similar to native wearOS scrollbar in devices with round screens.
   const RoundScrollBar({
-    super.key,
     required this.controller,
     this.padding = 8,
     this.width = 8,
@@ -19,6 +33,7 @@ class RoundScrollBar extends StatefulWidget {
     this.opacityAnimationCurve = Curves.easeInOut,
     this.opacityAnimationDuration = const Duration(milliseconds: 250),
     this.autoHideDuration = const Duration(seconds: 3),
+    super.key,
   });
 
   @override

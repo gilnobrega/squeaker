@@ -8,17 +8,35 @@ import 'package:vibration/vibration.dart';
 import 'package:wearable_rotary/wearable_rotary.dart';
 
 class RotaryPageView extends StatefulWidget {
+  /// Creates a scrollable list that works page by page from an explicit [List] of widgets.
   final List<Widget> children;
+
+  /// A [RotaryScrollController] may be provided.
   final RotaryScrollController? rotaryScrollController;
+
+  /// A [PageController] may be provided.
   final PageController? pageController;
+
+  /// Duration of the animation between page transitions.
   final Duration duration;
+
+  /// Animation curve for page transitions.
   final Curve curve;
+
+  /// Scroll physics for [PageView]
   final ScrollPhysics physics;
+
+  /// Scroll direction.
+  /// Defaults to `Axis.vertical` as `Axis.horizontal` may be misinterpreted by wearOS as back button.
   final Axis scrollDirection;
+
+  /// Whether device should vibrate after each page transition.
   final bool hasHapticFeedback;
 
+  /// A [PageView] adapted to rounded screens in wearOS.
+  /// Includes a [RoundScrollBar]
+  /// Similar to the generic [PageView] constructor where an explicit list of [children] must be provided.
   const RotaryPageView({
-    super.key,
     required this.children,
     this.rotaryScrollController,
     this.pageController,
@@ -27,6 +45,7 @@ class RotaryPageView extends StatefulWidget {
     this.physics = const PageScrollPhysics(),
     this.scrollDirection = Axis.vertical,
     this.hasHapticFeedback = true,
+    super.key,
   });
 
   @override
@@ -39,6 +58,7 @@ class _RotaryPageViewState extends State<RotaryPageView> {
 
   static const _kVibrationDuration = 25;
   static const _kVibrationAmplitude = 64;
+  // Prevents onEdgeVibration to be triggered more than once per second
   static const _kOnEdgeVibrationDelay = Duration(seconds: 1);
 
   late final StreamSubscription<RotaryEvent> _rotarySubscription;
