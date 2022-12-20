@@ -101,17 +101,28 @@ class _RotaryScrollBarState extends State<RotaryScrollBar> {
 
   void _rotaryEventListenerScrollController(RotaryEvent event) {
     final nextPos = _getNextPosition(event);
-    _scrollToPosition(nextPos);
+    _scrollAndVibrate(nextPos);
   }
 
-  void _scrollToPosition(num pos) {
-    widget.controller.animateTo(
-      pos.toDouble(),
-      duration: const Duration(milliseconds: 50),
-      curve: widget.curve,
-    );
+  int _currentUpdate = 0;
+  bool _isAnimating = false;
+  void _updateIsAnimating(int thisUpdate) {
+    if (thisUpdate != _currentUpdate) return;
+    _isAnimating = false;
+  }
 
+  void _scrollAndVibrate(num pos) {
+    _isAnimating = true;
+    _currentUpdate++;
+    final thisUpdate = _currentUpdate;
+    _scrollToPosition(pos).then((_) => _updateIsAnimating(thisUpdate));
     _triggerVibration();
+  }
+
+  Future<void> _scrollToPosition(num pos) async {
+    widget.controller.jumpTo(
+      pos.toDouble(),
+    );
   }
 
   void _triggerVibration() {
@@ -122,15 +133,15 @@ class _RotaryScrollBarState extends State<RotaryScrollBar> {
     );
   }
 
-  bool _isVibrating = false;
+  bool _isVibratingOnEdge = false;
   void _scrollOnEdge(RotaryEvent event) {
-    if (_isVibrating) return;
+    if (_isVibratingOnEdge) return;
 
-    _isVibrating = true;
+    _isVibratingOnEdge = true;
     widget.controller.notifyListeners();
     final nextPosition = _getNextPosition(event);
-    _scrollToPosition(nextPosition);
-    Future.delayed(_kOnEdgeVibrationDelay, () => _isVibrating = false);
+    _scrollAndVibrate(nextPosition);
+    Future.delayed(_kOnEdgeVibrationDelay, () => _isVibratingOnEdge = false);
   }
 
   bool _isAtEdge(RotaryDirection direction) {
@@ -187,8 +198,8 @@ class _RotaryScrollBarPageState extends _RotaryScrollBarState {
   }
 
   void _pageControllerListener() {
-    ///TODO fix this
-    //_currentPage = _pageController.page!.toInt();
+    if (_isAnimating) return;
+    _currentPage = _pageController.page!.toInt();
   }
 
   @override
@@ -199,14 +210,12 @@ class _RotaryScrollBarPageState extends _RotaryScrollBarState {
   }
 
   @override
-  void _scrollToPosition(num pos) {
-    _pageController.animateToPage(
+  Future<void> _scrollToPosition(num pos) async {
+    return _pageController.animateToPage(
       pos.toInt(),
       duration: widget.duration,
       curve: widget.curve,
     );
-
-    _triggerVibration();
   }
 
   @override
