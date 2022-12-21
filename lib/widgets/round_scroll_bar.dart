@@ -3,6 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
+// starts at the 2pm marker on an analog watch
+const _kProgressBarStartingPoint = math.pi * (-1 / 2 + 1 / 3);
+// finishes at the 4pm marker on an analog watch
+const _kProgressBarLength = math.pi / 3;
+
 class RoundScrollBar extends StatefulWidget {
   /// ScrollController for the scrollbar.
   final ScrollController controller;
@@ -25,6 +30,12 @@ class RoundScrollBar extends StatefulWidget {
   /// How long scrollbar is displayed after a scroll event.
   final Duration autoHideDuration;
 
+  /// Overrides color of the scrollbar track.
+  final Color? trackColor;
+
+  /// Overrides color of the scrollbar thumb.
+  final Color? thumbColor;
+
   /// A scrollbar which curves around circular screens.
   /// Similar to native wearOS scrollbar in devices with round screens.
   const RoundScrollBar({
@@ -35,6 +46,8 @@ class RoundScrollBar extends StatefulWidget {
     this.opacityAnimationCurve = Curves.easeInOut,
     this.opacityAnimationDuration = const Duration(milliseconds: 250),
     this.autoHideDuration = const Duration(seconds: 3),
+    this.trackColor,
+    this.thumbColor,
     super.key,
   });
 
@@ -43,21 +56,19 @@ class RoundScrollBar extends StatefulWidget {
 }
 
 class _RoundScrollBarState extends State<RoundScrollBar> {
-  // starts at the 2pm marker on an analog watch
-  static const _kProgressBarStartingPoint = math.pi * (-1 / 2 + 1 / 3);
-  // finishes at the 4pm marker on an analog watch
-  static const _kProgressBarLength = math.pi / 3;
-
-  late double _index;
-  late double _length;
+  double? _index;
+  double? _fractionOfThumb;
 
   bool _isScrollBarVisible = true;
 
   void _onScrolled() {
+    if (!widget.controller.hasClients) return;
+
     setState(() {
       _isScrollBarVisible = true;
       _updateScrollValues();
     });
+
     _hideAfterDelay();
   }
 
@@ -77,10 +88,11 @@ class _RoundScrollBarState extends State<RoundScrollBar> {
     );
   }
 
-  _updateScrollValues() {
-    _length = (widget.controller.position.maxScrollExtent /
-        widget.controller.position.viewportDimension);
-    _length++;
+  void _updateScrollValues() {
+    _fractionOfThumb = 1 /
+        ((widget.controller.position.maxScrollExtent /
+                widget.controller.position.viewportDimension) +
+            1);
 
     _index = (widget.controller.offset /
         widget.controller.position.viewportDimension);
@@ -88,9 +100,9 @@ class _RoundScrollBarState extends State<RoundScrollBar> {
 
   @override
   void initState() {
-    _updateScrollValues();
     widget.controller.addListener(_onScrolled);
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updateScrollValues());
     WidgetsBinding.instance.addPostFrameCallback((_) => _hideAfterDelay());
   }
 
@@ -113,33 +125,86 @@ class _RoundScrollBarState extends State<RoundScrollBar> {
 
   @override
   Widget build(BuildContext context) {
+    if (_index == null || _fractionOfThumb == null) return Container();
+
     return _addAnimatedOpacity(
       child: Stack(
         children: [
-          CustomPaint(
-            size: MediaQuery.of(context).size,
-            painter: _RoundProgressBarPainter(
-              angleLength: _kProgressBarLength,
-              color: Theme.of(context).highlightColor,
-              startingAngle: _kProgressBarStartingPoint,
-              trackPadding: widget.padding,
-              trackWidth: widget.width,
-            ),
+          RoundProgressBarTrack(
+            padding: widget.padding,
+            width: widget.width,
+            color: widget.trackColor,
           ),
-          Transform.rotate(
-            angle: _index * (_kProgressBarLength / _length),
-            child: CustomPaint(
-              size: MediaQuery.of(context).size,
-              painter: _RoundProgressBarPainter(
-                angleLength: (_kProgressBarLength / _length),
-                startingAngle: _kProgressBarStartingPoint,
-                color: Theme.of(context).highlightColor.withOpacity(1.0),
-                trackPadding: widget.padding,
-                trackWidth: widget.width,
-              ),
-            ),
+          RoundScrollBarThumb(
+            padding: widget.padding,
+            width: widget.width,
+            fraction: _fractionOfThumb!,
+            index: _index!,
+            color: widget.thumbColor,
           )
         ],
+      ),
+    );
+  }
+}
+
+class RoundProgressBarTrack extends StatelessWidget {
+  final double padding;
+  final double width;
+  final Color? color;
+
+  const RoundProgressBarTrack({
+    required this.padding,
+    required this.width,
+    this.color,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: MediaQuery.of(context).size,
+      painter: _RoundProgressBarPainter(
+        angleLength: _kProgressBarLength,
+        color: color ?? Theme.of(context).highlightColor,
+        startingAngle: _kProgressBarStartingPoint,
+        trackPadding: padding,
+        trackWidth: width,
+      ),
+    );
+  }
+}
+
+class RoundScrollBarThumb extends StatelessWidget {
+  final double padding;
+  final double width;
+  final Color? color;
+  final double fraction;
+  final double index;
+
+  const RoundScrollBarThumb({
+    required this.padding,
+    required this.width,
+    required this.fraction,
+    required this.index,
+    this.color,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final angleLength = _kProgressBarLength * fraction;
+    return Transform.rotate(
+      angle: index * angleLength,
+      child: CustomPaint(
+        size: MediaQuery.of(context).size,
+        painter: _RoundProgressBarPainter(
+          angleLength: angleLength,
+          startingAngle: _kProgressBarStartingPoint,
+          color: color ?? Theme.of(context).highlightColor.withOpacity(1.0),
+          trackPadding: padding,
+          trackWidth: width,
+        ),
       ),
     );
   }
