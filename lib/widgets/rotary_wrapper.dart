@@ -8,9 +8,8 @@ class RotaryScrollWrapper extends StatelessWidget {
   /// A scrollbar adapted to round screens that reacts to rotary events.
   final RotaryScrollBar rotaryScrollBar;
 
-  /// Displays a [RotaryScrollBar] on top of a scrollview `child`.
-  /// Handles wearOS rotary events and controls the `controller`.
-  /// Provides haptic feedback on content scroll.
+  /// Displays a [RotaryScrollBar] on top of a scrollable `child`.
+  /// This can be a [PageView], [ListView], [SingleChildScrollView] or any other scroll view.
   const RotaryScrollWrapper({
     required this.rotaryScrollBar,
     required this.child,
