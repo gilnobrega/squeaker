@@ -205,7 +205,7 @@ class _RotaryScrollBarPageState extends _RotaryScrollBarState {
   @override
   void _rotaryEventListenerScrollController(RotaryEvent event) {
     final nextPage = _getNextPosition(event);
-    _scrollToPosition(nextPage);
+    _scrollAndVibrate(nextPage);
     _currentPage = nextPage.toInt();
   }
 

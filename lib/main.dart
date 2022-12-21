@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:squeaker/widgets/rotary_page_view.dart';
+import 'package:squeaker/widgets/rotary_wrapper.dart';
+import 'package:squeaker/widgets/rotary_scroll_bar.dart';
 import 'package:squeaker/widgets/tweet_screen.dart';
 import 'package:wear/wear.dart';
 
@@ -30,6 +31,14 @@ class WatchScreen extends StatefulWidget {
 }
 
 class _WatchScreenState extends State<WatchScreen> {
+  final pageController = PageController();
+
+  @override
+  void dispose() {
+    pageController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,25 +47,32 @@ class _WatchScreenState extends State<WatchScreen> {
         builder: (BuildContext context, WearShape shape, Widget? child) {
           return AmbientMode(
             builder: (context, mode, child) {
-              return const RotaryPageView(
-                children: [
-                  TweetScreen(
-                    user: 'squeaker',
-                    content: 'test',
-                    controller: null,
-                  ),
-                  TweetScreen(
-                    user: 'squeaker',
-                    content: 'test',
-                    controller: null,
-                  ),
-                  TweetScreen(
-                    user: 'squeaker',
-                    content:
-                        '''Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed tincidunt commodo erat non tincidunt. Nullam iaculis enim nulla. Ut ut lectus non odio pellentesque ultrices. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum facilisis arcu vitae nibh lobortis vestibulum. Morbi sodales vehicula dolor a pellentesque. Duis sagittis nisi felis, ut suscipit tellus accumsan vitae. Aliquam ex nisl, ullamcorper id iaculis in, consequat sit amet elit. Vestibulum mattis semper nisl, ac suscipit arcu maximu''',
-                    controller: null,
-                  ),
-                ],
+              return RotaryScrollWrapper(
+                rotaryScrollBar: RotaryScrollBar(
+                  controller: pageController,
+                ),
+                child: PageView(
+                  scrollDirection: Axis.vertical,
+                  controller: pageController,
+                  children: const [
+                    TweetScreen(
+                      user: 'squeaker',
+                      content: 'test',
+                      controller: null,
+                    ),
+                    TweetScreen(
+                      user: 'squeaker',
+                      content: 'test',
+                      controller: null,
+                    ),
+                    TweetScreen(
+                      user: 'squeaker',
+                      content:
+                          '''Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed tincidunt commodo erat non tincidunt. Nullam iaculis enim nulla. Ut ut lectus non odio pellentesque ultrices. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum facilisis arcu vitae nibh lobortis vestibulum. Morbi sodales vehicula dolor a pellentesque. Duis sagittis nisi felis, ut suscipit tellus accumsan vitae. Aliquam ex nisl, ullamcorper id iaculis in, consequat sit amet elit. Vestibulum mattis semper nisl, ac suscipit arcu maximu''',
+                      controller: null,
+                    ),
+                  ],
+                ),
               );
             },
           );
