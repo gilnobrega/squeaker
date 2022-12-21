@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:squeaker/widgets/rotary_wrapper.dart';
-import 'package:squeaker/widgets/rotary_scroll_bar.dart';
+import 'package:rotary_scrollbar/rotary_scrollbar.dart';
 import 'package:squeaker/widgets/tweet_screen.dart';
 import 'package:wear/wear.dart';
 
@@ -48,7 +47,7 @@ class _WatchScreenState extends State<WatchScreen> {
           return AmbientMode(
             builder: (context, mode, child) {
               return RotaryScrollWrapper(
-                rotaryScrollBar: RotaryScrollBar(
+                rotaryScrollbar: RotaryScrollbar(
                   controller: pageController,
                 ),
                 child: PageView(
@@ -107,7 +106,7 @@ class _WatchScreenListState extends State<WatchScreenList> {
           return AmbientMode(
             builder: (context, mode, child) {
               return RotaryScrollWrapper(
-                rotaryScrollBar: RotaryScrollBar(
+                rotaryScrollbar: RotaryScrollbar(
                   controller: scrollController,
                 ),
                 child: ListView.builder(
